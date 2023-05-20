@@ -30,9 +30,9 @@ namespace DiplomAPI.Controllers
         [Route("api/auth")]
         public IActionResult Auth([FromBody] ModelUser value)
         {
-            string query = $"select count(*) from model_user join user_role on user_id=iduser where username='{value.username}' and password='{value.password}' and active=true and roles='COURIER'";
-      
-            string count = "";
+            string query = $"select password from model_user join user_role on user_id=iduser where username='{value.username}' and active=true and roles='COURIER'";
+            DataTable table = new DataTable();
+            MySqlDataReader myreader;
             string sqlDataSource = _configuration.GetConnectionString("Store");
 
             using (MySqlConnection myCon = new MySqlConnection(sqlDataSource))
@@ -40,16 +40,16 @@ namespace DiplomAPI.Controllers
                 myCon.Open();
                 using (MySqlCommand myCommand = new MySqlCommand(query, myCon))
                 {
-                    count = myCommand.ExecuteScalar().ToString();
-
-
+                    myreader = myCommand.ExecuteReader();
+                    table.Load(myreader);
+                    myreader.Close();
                     myCon.Close();
-                    
+
                 }
 
             }
-            if (count=="1")
-                return Ok();
+            if (table.Rows.Count!=0)
+                return new JsonResult(table);
             else
                 return Unauthorized();
 
@@ -76,7 +76,7 @@ namespace DiplomAPI.Controllers
                 }
             }
             if (table.Rows.Count!=0)
-                return Ok(table);
+                return new JsonResult(table);
             else
                 return NotFound();
         }
