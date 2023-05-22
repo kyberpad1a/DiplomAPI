@@ -20,17 +20,25 @@ namespace DiplomAPI.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        /// <summary>
+        /// Инициализация контроллера
+        /// </summary>
+        /// <param name="configuration">Данные конфигурации</param>
         public AuthController(IConfiguration configuration)
         {
             _configuration = configuration;
 
         }
-
+        /// <summary>
+        /// Контроллер авторизации
+        /// </summary>
+        /// <param name="value">Данные пользователя, принимаемые в Body</param>
+        /// <returns>Данные пользователя или статус 401</returns>
         [HttpPost]
         [Route("api/auth")]
         public IActionResult Auth([FromBody] ModelUser value)
         {
-            string query = $"select password from model_user join user_role on user_id=iduser where username='{value.username}' and active=true and roles='COURIER'";
+            string query = $"select password, iduser from model_user join user_role on user_id=iduser where username='{value.username}' and active=true and roles='COURIER'";
             DataTable table = new DataTable();
             MySqlDataReader myreader;
             string sqlDataSource = _configuration.GetConnectionString("Store");
@@ -54,7 +62,10 @@ namespace DiplomAPI.Controllers
                 return Unauthorized();
 
         }
-
+        /// <summary>
+        /// Контроллер получения доступных заказов
+        /// </summary>
+        /// <returns>Данные о доступных заказах или статус 404</returns>
         [HttpGet]
         [Route("api/getorders")]
         public IActionResult GetOrders()
@@ -80,11 +91,16 @@ namespace DiplomAPI.Controllers
             else
                 return NotFound();
         }
+        /// <summary>
+        /// Контроллер принятия заказа курьером
+        /// </summary>
+        /// <param name="value">Данные курьера и заказа</param>
+        /// <returns>Статус 204 или 404</returns>
         [HttpPut]
         [Route("api/updatetaken")]
         public IActionResult TakeOrders([FromBody] ModelShipping value)
         {
-            string query = $"UPDATE `model_shipping` SET `shipping_address`=`shipping_address`,`shipping_apartment`=`shipping_apartment`,`shipping_status`=`shipping_status`,`shipping_taken`=true,`order_id`=`order_id` WHERE `idshipping`={value.idshipping};";
+            string query = $"UPDATE `model_shipping` SET `shipping_address`=`shipping_address`,`shipping_apartment`=`shipping_apartment`,`shipping_status`=`shipping_status`,`shipping_taken`=true,`order_id`=`order_id`, `user_iduser` = {value.user_iduser} WHERE `idshipping`={value.idshipping};";
             string query2 = $"select count(*) from `model_shipping` where `idshipping`={value.idshipping};";
             string sqlDataSource = _configuration.GetConnectionString("Store");
             string count = "";
@@ -108,6 +124,11 @@ namespace DiplomAPI.Controllers
                 return NotFound();
         }
 
+        /// <summary>
+        /// Контроллер подтверждения доставки заказа
+        /// </summary>
+        /// <param name="value">Данные заказа</param>
+        /// <returns>Статус 204 или 404</returns>
         [HttpPut]
         [Route("api/updatestatus")]
         public IActionResult ConfirmOrders([FromBody] ModelShipping value)
@@ -137,12 +158,16 @@ namespace DiplomAPI.Controllers
         }
 
 
-
-        [HttpGet]
-        [Route("api/get")]
-        public IActionResult Get()
+        /// <summary>
+        /// Контроллер получения активного заказа текущего пользователя
+        /// </summary>
+        /// <param name="value">Данные курьера</param>
+        /// <returns>Данные активного заказа текущего пользователя или статус 404</returns>
+        [HttpPost]
+        [Route("api/getorderdata")]
+        public IActionResult GetOrderData([FromBody] ModelShipping value)
         {
-            string query = $"select * from model_user";
+            string query = $"select `idshipping`, `shipping_address`, `shipping_apartment` from `model_shipping` where `shipping_status`=false and `shipping_taken`=true and `user_iduser`={value.user_iduser}";
             DataTable table = new DataTable();
             string sqlDataSource = _configuration.GetConnectionString("Store");
             
@@ -158,7 +183,10 @@ namespace DiplomAPI.Controllers
                     myCon.Close();
                 }
             }
-            return new JsonResult(table);
+            if (table.Rows.Count != 0)
+                return new JsonResult(table);
+            else
+                return NotFound();
         }
 
 

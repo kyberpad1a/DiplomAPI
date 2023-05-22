@@ -13,5 +13,6 @@ namespace DiplomAPI.Models
         public bool shipping_status { get; set; }
         public bool shipping_taken { get; set; }
         public int order_id { get; set; }
+        public int user_iduser { get; set; }
     }
 }

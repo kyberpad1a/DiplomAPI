@@ -11,11 +11,19 @@ namespace DiplomAPI
 {
     public class Program
     {
+        /// <summary>
+        /// Сборка IIS Express
+        /// </summary>
+        /// <param name="args">Аргументы</param>
         public static void Main(string[] args)
         {
             CreateHostBuilder(args).Build().Run();
         }
-
+        /// <summary>
+        /// Создание IIS Express
+        /// </summary>
+        /// <param name="args">Аргументы</param>
+        /// <returns>Собранный IIS Express</returns>
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
